@@ -19,6 +19,8 @@ p{margin:0;color:var(--muted)}
 <button id="copy" type="button">Copy</button>
 </div>
 <script>
+// Started from uploader.html (flag set in the last 15 minutes): hand code+state back to it, same origin, no third party.
+try{const f=+localStorage.getItem('lcg-uploader-auth');if(f&&Date.now()-f<9e5){localStorage.removeItem('lcg-uploader-auth');location.replace('uploader.html'+location.search);}}catch(e){}
 const t=document.getElementById('url');t.value=location.href;
 const q=new URLSearchParams(location.search);
 if(q.get('error')){document.getElementById('h').textContent='Authorization was not completed';document.getElementById('msg').textContent='TikTok returned: '+(q.get('error_description')||q.get('error'));}

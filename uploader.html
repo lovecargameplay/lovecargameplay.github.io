@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lovecargameplay Uploader</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=Source+Serif+4:wght@400;600&display=swap">
+<style>
+/* Same tokens as terms.html. Layout: account bar, then video list + preview, then post settings, then status. */
+:root {
+  --bg: #f6f7f9; --fg: #1b2230; --muted: #5d6676; --rule: #d9dde4; --accent: #c2410c; --panel: #ffffff;
+  --ok: #15803d; --bad: #b91c1c; --soft: #eef0f3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --ui: "Archivo", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #12161d; --fg: #e7eaf0; --muted: #9aa3b2; --rule: #2a313c; --accent: #fb923c; --panel: #181d26; --ok: #4ade80; --bad: #f87171; --soft: #202632; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #12161d; --fg: #e7eaf0; --muted: #9aa3b2; --rule: #2a313c; --accent: #fb923c; --panel: #181d26; --ok: #4ade80; --bad: #f87171; --soft: #202632; color-scheme: dark }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.wrap { max-width: 920px; margin: 0 auto; display: grid; gap: 24px; }
+header { display: grid; gap: 8px; }
+.kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { font-family: var(--display); font-size: clamp(26px, 5vw, 36px); line-height: 1.1; margin: 0; }
+h2 { font-family: var(--display); font-size: 17px; margin: 0 0 12px; }
+nav { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; }
+nav a { color: var(--fg); text-decoration: none; border: 1px solid var(--rule); border-radius: 6px; padding: 6px 12px; background: var(--panel); }
+nav a:hover, nav a:focus-visible { border-color: var(--accent); outline: none; }
+a { color: var(--accent); }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; }
+.muted { color: var(--muted); font-size: 14px; }
+.note { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.err { color: var(--bad); }
+.hidden { display: none !important; }
+button { font: inherit; font-weight: 700; padding: 9px 18px; border-radius: 6px; border: 1px solid transparent; background: var(--accent); color: #fff; cursor: pointer; }
+button.ghost { background: transparent; color: var(--fg); border-color: var(--rule); font-weight: 500; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.account { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.account img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: var(--soft); }
+.account .who { flex: 1; min-width: 160px; }
+.account .name { font-weight: 700; font-size: 17px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.list { display: grid; gap: 6px; max-height: 420px; overflow: auto; }
+.item { display: flex; gap: 10px; align-items: baseline; text-align: left; width: 100%; background: transparent; color: var(--fg);
+  border: 1px solid var(--rule); font-weight: 500; padding: 9px 12px; }
+.item[aria-pressed="true"] { border-color: var(--accent); background: var(--soft); }
+.item .day { font-weight: 700; min-width: 52px; }
+.item .file { flex: 1; overflow-wrap: anywhere; }
+.item .len { color: var(--muted); font-variant-numeric: tabular-nums; }
+.phone { background: #000; border-radius: 14px; overflow: hidden; aspect-ratio: 9 / 16; display: grid; place-items: center; color: #9aa3b2; font-size: 13px; }
+.phone video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.cap-preview { white-space: pre-wrap; font-size: 14px; margin-top: 10px; overflow-wrap: anywhere; }
+.cap-preview .by { font-weight: 700; }
+label.field { display: grid; gap: 6px; font-weight: 700; margin-bottom: 18px; }
+textarea, select { width: 100%; font: 15px/1.45 var(--ui); background: var(--bg); color: var(--fg); border: 1px solid var(--rule); border-radius: 6px; padding: 10px; }
+textarea { min-height: 120px; resize: vertical; }
+.counter { font-weight: 400; font-size: 13px; color: var(--muted); justify-self: end; }
+fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.checks { display: flex; gap: 18px; flex-wrap: wrap; }
+.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.check.off { color: var(--muted); }
+.switch { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-weight: 700; }
+.switch input { width: 42px; height: 22px; accent-color: var(--accent); }
+.sub { margin: 10px 0 0 0; padding: 12px; border-radius: 8px; background: var(--soft); display: grid; gap: 10px; }
+.sub .label-hint { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 26px; }
+.declare { font-size: 14px; margin: 4px 0 16px; }
+.post-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.steps li { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+.steps li::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--rule); flex: none; }
+.steps li.done { color: var(--fg); } .steps li.done::before { background: var(--ok); border-color: var(--ok); }
+.steps li.now { color: var(--fg); font-weight: 700; } .steps li.now::before { border-color: var(--accent); }
+.steps li.fail { color: var(--bad); font-weight: 700; } .steps li.fail::before { background: var(--bad); border-color: var(--bad); }
+code { font-size: 13px; background: var(--soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">Lovecargameplay</div>
+  <h1>Post to TikTok</h1>
+  <nav><a href="index.html">Home</a><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a></nav>
+</header>
+
+<!-- Helper offline -->
+<section class="card hidden" id="offline">
+  <h2>Local uploader helper is not running</h2>
+  <p class="muted">This page talks only to a helper on this computer, which keeps the TikTok sign-in on this machine. Start it, then reload:</p>
+  <p><code>.venv/bin/python tools/tiktok.py serve</code></p>
+  <p class="note" id="offline-detail"></p>
+</section>
+
+<!-- Account -->
+<section class="card hidden" id="account-card">
+  <div class="account">
+    <img id="avatar" alt="" hidden>
+    <div class="who">
+      <div class="muted" id="who-label">Not connected</div>
+      <div class="name" id="nickname"></div>
+      <div class="muted" id="username"></div>
+    </div>
+    <button type="button" id="connect">Connect TikTok</button>
+    <button type="button" class="ghost hidden" id="disconnect">Disconnect</button>
+  </div>
+  <p class="note err" id="account-err"></p>
+</section>
+
+<!-- Compose -->
+<div class="grid hidden" id="compose">
+  <section class="card">
+    <h2>1. Choose a video</h2>
+    <div class="list" id="list" role="group" aria-label="Videos ready to post"></div>
+    <p class="note" id="limit-note"></p>
+
+    <h2 style="margin-top:24px">2. Post settings</h2>
+    <label class="field">Caption
+      <textarea id="caption" maxlength="2200" placeholder="Choose a video to load its caption"></textarea>
+      <span class="counter" id="counter">0 / 2200</span>
+    </label>
+
+    <label class="field">Who can view this video
+      <select id="privacy" required>
+        <option value="" selected disabled>Select privacy level</option>
+      </select>
+      <span class="note" id="privacy-note"></span>
+    </label>
+
+    <fieldset>
+      <legend>Allow users to</legend>
+      <div class="checks">
+        <label class="check" id="c-comment"><input type="checkbox" id="allow_comment"> Comment</label>
+        <label class="check" id="c-duet"><input type="checkbox" id="allow_duet"> Duet</label>
+        <label class="check" id="c-stitch"><input type="checkbox" id="allow_stitch"> Stitch</label>
+      </div>
+      <p class="note" id="interact-note"></p>
+    </fieldset>
+
+    <fieldset>
+      <label class="switch">Disclose video content <input type="checkbox" role="switch" id="commercial"></label>
+      <p class="note">Turn on to disclose that this video promotes goods or services in exchange for something of value.</p>
+      <div class="sub hidden" id="commercial-sub">
+        <label class="check"><input type="checkbox" id="brand_organic"> Your brand</label>
+        <div class="label-hint">You are promoting yourself or your own business. This video will be classified as Brand Organic.</div>
+        <label class="check" id="c-branded"><input type="checkbox" id="brand_content"> Branded content</label>
+        <div class="label-hint">You are promoting another brand or a third party. This video will be classified as Branded Content.</div>
+        <div class="note" id="commercial-label"></div>
+      </div>
+    </fieldset>
+
+    <p class="declare" id="declare"></p>
+    <div class="post-row">
+      <span id="post-wrap"><button type="button" id="post" disabled>Post</button></span>
+      <span class="note" id="post-hint">Choose a video and a privacy level.</span>
+    </div>
+  </section>
+
+  <aside class="card">
+    <h2>Preview</h2>
+    <div class="phone" id="phone"><span>No video selected</span></div>
+    <div class="cap-preview" id="cap-preview"></div>
+  </aside>
+</div>
+
+<!-- Status -->
+<section class="card hidden" id="status-card">
+  <h2>3. Status</h2>
+  <ol class="steps" id="steps">
+    <li data-k="UPLOAD">Uploading video to TikTok</li>
+    <li data-k="PROCESSING_UPLOAD">TikTok is processing the upload</li>
+    <li data-k="PUBLISH_COMPLETE">Posted</li>
+  </ol>
+  <p class="note" id="status-detail"></p>
+  <p class="note">After posting, it may take a few minutes for the video to be processed and appear on your profile.</p>
+</section>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8766';
+const $ = id => document.getElementById(id);
+const PRIVACY_LABELS = { PUBLIC_TO_EVERYONE: 'Everyone', MUTUAL_FOLLOW_FRIENDS: 'Friends', FOLLOWER_OF_CREATOR: 'Followers', SELF_ONLY: 'Only me' };
+const MUC = '<a href="https://www.tiktok.com/legal/page/global/music-usage-confirmation/en" target="_blank" rel="noopener">Music Usage Confirmation</a>';
+const BCP = '<a href="https://www.tiktok.com/legal/page/global/bc-policy/en" target="_blank" rel="noopener">Branded Content Policy</a>';
+let creator = null, items = [], chosen = null, posting = false;
+
+async function api(path, body) {
+  const r = await fetch(API + path, body === undefined ? {} :
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+  if (!r.ok) { const e = new Error(j.error || ('HTTP ' + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+
+function fmtSec(s) { return s == null ? '' : (s < 60 ? s.toFixed(1) + ' s' : Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0')); }
+function tooLong(it) { return creator && it.duration_sec != null && it.duration_sec > creator.max_video_post_duration_sec; }
+
+async function boot() {
+  // Coming back from TikTok's consent page via callback.html: finish sign-in on the helper.
+  const q = new URLSearchParams(location.search);
+  let health;
+  try { health = await api('/api/health'); }
+  catch (e) { $('offline').classList.remove('hidden'); $('offline-detail').textContent = 'Could not reach ' + API + ' (' + e.message + ').'; return; }
+  $('account-card').classList.remove('hidden');
+  if (q.has('code') || q.has('error')) {
+    history.replaceState(null, '', location.pathname);
+    if (q.has('error')) $('account-err').textContent = 'TikTok sign-in was not completed: ' + (q.get('error_description') || q.get('error'));
+    else {
+      try { await api('/api/auth/finish', { query: '?' + q.toString() }); }
+      catch (e) { $('account-err').textContent = 'Sign-in failed: ' + e.message; }
+    }
+  }
+  await loadAccount();
+}
+
+async function loadAccount() {
+  $('account-err').textContent = '';
+  let m;
+  try { m = await api('/api/me'); }
+  catch (e) {
+    showSignedOut();
+    if (e.status !== 401) $('account-err').textContent = /spam|reached|limit|cannot|can_not|banned/i.test(e.message)
+      ? 'This TikTok account cannot post right now. Please try again later. (' + e.message + ')'
+      : 'Could not load the TikTok account: ' + e.message;
+    return;
+  }
+  creator = m.creator;
+  $('who-label').textContent = 'Posting to';
+  $('nickname').textContent = creator.creator_nickname || (m.user && m.user.display_name) || '';
+  $('username').textContent = creator.creator_username ? '@' + creator.creator_username : '';
+  const av = creator.creator_avatar_url || (m.user && m.user.avatar_url);
+  if (av) { $('avatar').src = av; $('avatar').hidden = false; }
+  $('connect').classList.add('hidden'); $('disconnect').classList.remove('hidden');
+  setupSettings();
+  await loadQueue();
+  $('compose').classList.remove('hidden');
+}
+
+function showSignedOut() {
+  creator = null;
+  $('who-label').textContent = 'Not connected';
+  $('nickname').textContent = 'Connect your TikTok account to post';
+  $('username').textContent = '';
+  $('avatar').hidden = true;
+  $('connect').classList.remove('hidden'); $('disconnect').classList.add('hidden');
+  $('compose').classList.add('hidden'); $('status-card').classList.add('hidden');
+}
+
+$('connect').onclick = async () => {
+  try {
+    const { url } = await api('/api/auth/start', {});
+    try { localStorage.setItem('lcg-uploader-auth', String(Date.now())); } catch (e) {}
+    location.href = url;
+  } catch (e) { $('account-err').textContent = 'Could not start sign-in: ' + e.message; }
+};
+$('disconnect').onclick = async () => {
+  try { await api('/api/auth/disconnect', {}); } catch (e) {}
+  showSignedOut();
+};
+
+function setupSettings() {
+  const sel = $('privacy');
+  sel.length = 1; sel.value = '';
+  for (const p of creator.privacy_level_options || []) {
+    const o = document.createElement('option'); o.value = p; o.textContent = PRIVACY_LABELS[p] || p; sel.appendChild(o);
+  }
+  const off = [];
+  for (const [k, flag, name] of [['comment', 'comment_disabled', 'Comment'], ['duet', 'duet_disabled', 'Duet'], ['stitch', 'stitch_disabled', 'Stitch']]) {
+    const box = $('allow_' + k); box.checked = false; box.disabled = !!creator[flag];
+    $('c-' + k).classList.toggle('off', !!creator[flag]);
+    $('c-' + k).title = creator[flag] ? name + ' is turned off in your TikTok privacy settings.' : '';
+    if (creator[flag]) off.push(name);
+  }
+  $('interact-note').textContent = off.length ? off.join(', ') + ' turned off in your TikTok settings, so ' + (off.length > 1 ? 'they are' : 'it is') + ' unavailable.' : '';
+  $('limit-note').textContent = 'This account can post videos up to ' + fmtSec(creator.max_video_post_duration_sec) + '.';
+  $('commercial').checked = false; $('brand_organic').checked = false; $('brand_content').checked = false;
+  refresh();
+}
+
+async function loadQueue() {
+  const list = $('list'); list.textContent = '';
+  try { items = (await api('/api/queue')).items; }
+  catch (e) { list.textContent = 'Could not load videos: ' + e.message; return; }
+  for (const it of items) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'item'; b.setAttribute('aria-pressed', 'false');
+    const parts = it.path.split('/');
+    b.innerHTML = '<span class="day"></span><span class="file"></span><span class="len"></span>';
+    b.querySelector('.day').textContent = 'Day ' + it.day;
+    b.querySelector('.file').textContent = parts[1] + ' / ' + parts[2].replace(/^final_short_|_tiktok\.mp4$/g, '');
+    b.querySelector('.len').textContent = it.exists ? fmtSec(it.duration_sec) : 'missing';
+    if (!it.exists || tooLong(it)) { b.disabled = true; b.title = it.exists ? 'Longer than this account allows' : 'File not found'; }
+    b.onclick = () => choose(it, b);
+    list.appendChild(b);
+  }
+}
+
+function choose(it, btn) {
+  if (posting) return;
+  chosen = it;
+  for (const b of $('list').children) b.setAttribute('aria-pressed', String(b === btn));
+  $('caption').value = it.caption;
+  const v = document.createElement('video');
+  v.controls = true; v.playsInline = true; v.preload = 'metadata';
+  v.src = API + '/api/video?path=' + encodeURIComponent(it.path);
+  v.onloadedmetadata = () => { if (creator && v.duration > creator.max_video_post_duration_sec) { chosen = null; $('post-hint').textContent = 'This video is longer than your account allows.'; refresh(); } };
+  $('phone').replaceChildren(v);
+  refresh();
+}
+
+function refresh() {
+  const cap = $('caption').value;
+  $('counter').textContent = cap.length + ' / 2200';
+  const cp = $('cap-preview'); cp.textContent = '';
+  if (creator && (chosen || cap)) { const by = document.createElement('div'); by.className = 'by'; by.textContent = '@' + (creator.creator_username || creator.creator_nickname); cp.append(by, document.createTextNode(cap)); }
+
+  const commercial = $('commercial').checked, organic = $('brand_organic').checked, branded = $('brand_content').checked;
+  $('commercial-sub').classList.toggle('hidden', !commercial);
+  if (!commercial) { $('brand_organic').checked = false; $('brand_content').checked = false; }
+  const privacy = $('privacy').value;
+
+  // Branded content cannot be private: disable "Only me" while it is checked, and Branded content while Only me is chosen.
+  const onlyMe = [...$('privacy').options].find(o => o.value === 'SELF_ONLY');
+  if (onlyMe) { onlyMe.disabled = commercial && branded; onlyMe.title = onlyMe.disabled ? 'Branded content visibility cannot be set to private.' : ''; }
+  $('brand_content').disabled = privacy === 'SELF_ONLY';
+  $('c-branded').classList.toggle('off', privacy === 'SELF_ONLY');
+  $('c-branded').title = privacy === 'SELF_ONLY' ? 'Branded content visibility cannot be set to private.' : '';
+  $('privacy-note').textContent = privacy === 'SELF_ONLY' && commercial ? 'Branded content visibility cannot be set to private.' : '';
+
+  const b = commercial && branded, o = commercial && organic;
+  $('commercial-label').textContent = b ? 'Your video will be labeled "Paid partnership".' : (o ? 'Your video will be labeled "Promotional content".' : '');
+  $('declare').innerHTML = b ? 'By posting, you agree to TikTok\'s ' + BCP + ' and ' + MUC + '.' : 'By posting, you agree to TikTok\'s ' + MUC + '.';
+
+  let why = '';
+  if (!chosen) why = 'Choose a video.';
+  else if (!privacy) why = 'Select who can view this video.';
+  else if (commercial && !organic && !branded) why = 'You need to indicate if your content promotes yourself, a third party, or both.';
+  else if (b && privacy === 'SELF_ONLY') why = 'Branded content visibility cannot be set to private.';
+  $('post').disabled = !!why || posting || !creator;
+  $('post-wrap').title = why;
+  $('post-hint').textContent = posting ? 'Posting…' : why;
+}
+for (const id of ['caption', 'privacy', 'allow_comment', 'allow_duet', 'allow_stitch', 'commercial', 'brand_organic', 'brand_content'])
+  $(id).addEventListener(id === 'caption' ? 'input' : 'change', refresh);
+
+function setStep(k, state, detail) {
+  const order = ['UPLOAD', 'PROCESSING_UPLOAD', 'PUBLISH_COMPLETE'];
+  const i = order.indexOf(k);
+  [...$('steps').children].forEach((li, j) => { li.className = j < i ? 'done' : (j === i ? state : ''); });
+  if (detail !== undefined) $('status-detail').textContent = detail;
+}
+
+$('post').onclick = async () => {
+  if ($('post').disabled) return;
+  posting = true; refresh();
+  $('status-card').classList.remove('hidden');
+  setStep('UPLOAD', 'now', 'Sending ' + chosen.path.split('/').pop() + ' to TikTok…');
+  let pid;
+  try {
+    pid = (await api('/api/post', {
+      path: chosen.path, caption: $('caption').value, privacy_level: $('privacy').value,
+      allow_comment: $('allow_comment').checked, allow_duet: $('allow_duet').checked, allow_stitch: $('allow_stitch').checked,
+      commercial: $('commercial').checked, brand_organic: $('brand_organic').checked, brand_content: $('brand_content').checked,
+    })).publish_id;
+  } catch (e) { setStep('UPLOAD', 'fail', 'Upload failed: ' + e.message); posting = false; refresh(); return; }
+  setStep('PROCESSING_UPLOAD', 'now', 'Uploaded. Publish ID ' + pid + '. Checking status…');
+  const t0 = Date.now();
+  while (Date.now() - t0 < 10 * 60 * 1000) {
+    await new Promise(r => setTimeout(r, 3000));
+    let s;
+    try { s = await api('/api/status?publish_id=' + encodeURIComponent(pid)); } catch (e) { $('status-detail').textContent = 'Status check failed, retrying: ' + e.message; continue; }
+    if (s.status === 'PUBLISH_COMPLETE') { setStep('PUBLISH_COMPLETE', 'done', 'Posted to @' + creator.creator_username + '. Status: PUBLISH_COMPLETE.'); [...$('steps').children].forEach(li => li.className = 'done'); break; }
+    if (s.status === 'FAILED') { setStep('PROCESSING_UPLOAD', 'fail', 'TikTok could not publish this video: ' + (s.fail_reason || 'unknown reason')); break; }
+    setStep('PROCESSING_UPLOAD', 'now', 'Status: ' + s.status + ' (' + Math.round((Date.now() - t0) / 1000) + ' s)');
+  }
+  posting = false; chosen = null;
+  for (const b of $('list').children) b.setAttribute('aria-pressed', 'false');
+  refresh();
+};
+
+boot();
+</script>
+</body>
+</html>
