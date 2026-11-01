@@ -88,6 +88,12 @@ code { font-size: 13px; background: var(--soft); padding: 1px 5px; border-radius
   <nav><a href="index.html">Home</a><a href="terms.html">Terms of Service</a><a href="privacy.html">Privacy Policy</a></nav>
 </header>
 
+<!-- Waiting for the browser's local network permission -->
+<section class="card hidden" id="waiting">
+  <h2>Connecting to the uploader helper…</h2>
+  <p class="muted">If your browser asks to allow this site to access devices on your local network, choose Allow. The page only connects to the helper running on this computer (127.0.0.1).</p>
+</section>
+
 <!-- Helper offline -->
 <section class="card hidden" id="offline">
   <h2>Local uploader helper is not running</h2>
@@ -202,9 +208,12 @@ function tooLong(it) { return creator && it.duration_sec != null && it.duration_
 async function boot() {
   // Coming back from TikTok's consent page via callback.html: finish sign-in on the helper.
   const q = new URLSearchParams(location.search);
+  // Chrome asks "Allow access to devices on your local network?" the first time; the request waits until answered.
+  const waitHint = setTimeout(() => $('waiting').classList.remove('hidden'), 1500);
   let health;
   try { health = await api('/api/health'); }
-  catch (e) { $('offline').classList.remove('hidden'); $('offline-detail').textContent = 'Could not reach ' + API + ' (' + e.message + ').'; return; }
+  catch (e) { clearTimeout(waitHint); $('waiting').classList.add('hidden'); $('offline').classList.remove('hidden'); $('offline-detail').textContent = 'Could not reach ' + API + ' (' + e.message + ').'; return; }
+  clearTimeout(waitHint); $('waiting').classList.add('hidden');
   $('account-card').classList.remove('hidden');
   if (q.has('code') || q.has('error')) {
     history.replaceState(null, '', location.pathname);
