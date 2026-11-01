@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lovecargameplay Uploader: Connected</title>
+<meta name="robots" content="noindex">
+<style>
+:root{--bg:#f6f7f9;--fg:#1b2230;--muted:#5d6676;--rule:#d9dde4;--accent:#c2410c;--panel:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#12161d;--fg:#e7eaf0;--muted:#9aa3b2;--rule:#2a313c;--accent:#fb923c;--panel:#181d26;color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Helvetica Neue",Arial,sans-serif;padding:40px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:640px;margin:0 auto;display:grid;gap:16px}
+h1{font-size:26px;margin:0}
+textarea{width:100%;box-sizing:border-box;min-height:120px;font:13px/1.4 ui-monospace,Menlo,monospace;background:var(--panel);color:var(--fg);border:1px solid var(--rule);border-radius:6px;padding:10px}
+button{justify-self:start;font:inherit;font-weight:600;padding:8px 16px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+p{margin:0;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<h1 id="h">TikTok authorization received</h1>
+<p id="msg">Copy the address below and paste it back into the uploader. This page does not send it anywhere.</p>
+<textarea id="url" readonly></textarea>
+<button id="copy" type="button">Copy</button>
+</div>
+<script>
+const t=document.getElementById('url');t.value=location.href;
+const q=new URLSearchParams(location.search);
+if(q.get('error')){document.getElementById('h').textContent='Authorization was not completed';document.getElementById('msg').textContent='TikTok returned: '+(q.get('error_description')||q.get('error'));}
+document.getElementById('copy').onclick=async()=>{try{await navigator.clipboard.writeText(t.value);document.getElementById('copy').textContent='Copied';}catch(e){t.select();}};
+</script></body></html>
