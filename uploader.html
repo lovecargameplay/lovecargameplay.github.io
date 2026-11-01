@@ -305,7 +305,7 @@ function choose(it, btn) {
   for (const b of $('list').children) b.setAttribute('aria-pressed', String(b === btn));
   $('caption').value = it.caption;
   const v = document.createElement('video');
-  v.controls = true; v.playsInline = true; v.preload = 'metadata';
+  v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.crossOrigin = 'anonymous';
   v.src = API + '/api/video?path=' + encodeURIComponent(it.path);
   v.onloadedmetadata = () => { if (creator && v.duration > creator.max_video_post_duration_sec) { chosen = null; $('post-hint').textContent = 'This video is longer than your account allows.'; refresh(); } };
   $('phone').replaceChildren(v);
